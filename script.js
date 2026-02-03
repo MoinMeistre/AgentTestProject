@@ -84,6 +84,23 @@ function generateRoomCode() {
     return code;
 }
 
+function generatePlayerId() {
+    return 'player_' + Math.random().toString(36).substr(2, 9);
+}
+
+function validateRoomCode(code) {
+    return /^[A-Z0-9]{4}$/.test(code);
+}
+
+function canStartGame(gameState) {
+    const minPlayers = 3;
+    const hasEnoughPlayers = gameState.players.length >= minPlayers;
+    const isHost = gameState.isHost;
+    const validImpostorCount = gameState.gameSettings.impostorCount < gameState.players.length;
+    
+    return isHost && hasEnoughPlayers && validImpostorCount;
+}
+
 function getRandomWord() {
     return wordList[Math.floor(Math.random() * wordList.length)];
 }
@@ -143,9 +160,9 @@ function handleJoin() {
     
     if (roomCode) {
         // Join existing room
-        gameState.roomCode = roomCode;
-        gameState.isHost = false;
-        simulateJoinRoom(roomCode, name);
+        if (joinRoom(roomCode, name)) {
+            // Success - player joined the room
+        }
     } else {
         showError('Bitte gib einen Raumcode ein oder erstelle einen neuen Raum.');
     }
@@ -163,30 +180,50 @@ function handleCreateRoom() {
     gameState.roomCode = generateRoomCode();
     gameState.isHost = true;
     
-    // Create new room
+    // Create new room with exactly one player (the host)
     gameState.players = [
-        { name: name, isHost: true, role: null }
+        { 
+            name: name, 
+            id: generatePlayerId(),
+            isHost: true, 
+            role: null,
+            joinedAt: new Date().toISOString()
+        }
     ];
     
     updateUI();
     showRoomCode();
 }
 
-function simulateJoinRoom(roomCode, playerName) {
-    // Simulate joining a room with some existing players
-    setTimeout(() => {
-        gameState.players = [
-            { name: 'Spielleiter', isHost: true, role: null },
-            { name: 'Spieler2', isHost: false, role: null },
-            { name: playerName, isHost: false, role: null }
-        ];
-        
-        if (!gameState.players.find(p => p.isHost)) {
-            gameState.players[0].isHost = true;
-        }
-        
-        updateUI();
-    }, 500);
+function joinRoom(roomCode, playerName) {
+    // Validate room code (in real implementation, this would check against a server)
+    if (!roomCode || roomCode.length !== 4) {
+        showError('Ungültiger Raumcode');
+        return false;
+    }
+    
+    // Check if player name already exists in the room
+    if (gameState.players.some(p => p.name === playerName)) {
+        showError('Dieser Name ist bereits vergeben');
+        return false;
+    }
+    
+    // Add new player to the room
+    const newPlayer = {
+        name: playerName,
+        id: generatePlayerId(),
+        isHost: false,
+        role: null,
+        joinedAt: new Date().toISOString()
+    };
+    
+    gameState.players.push(newPlayer);
+    gameState.roomCode = roomCode;
+    gameState.isHost = false;
+    gameState.playerName = playerName;
+    
+    updateUI();
+    return true;
 }
 
 function showRoomCode() {
@@ -221,12 +258,11 @@ function updateUI() {
 }
 
 function updateStartButton() {
-    const minPlayers = 3;
-    const canStart = gameState.players.length >= minPlayers && 
-                     gameState.gameSettings.impostorCount < gameState.players.length;
+    const canStart = canStartGame(gameState);
     
     startGameBtn.disabled = !canStart;
     
+    const minPlayers = 3;
     if (gameState.players.length < minPlayers) {
         statusText.textContent = `Warten auf mindestens ${minPlayers} Spieler... (${gameState.players.length}/${minPlayers})`;
     } else if (gameState.gameSettings.impostorCount >= gameState.players.length) {
@@ -247,7 +283,10 @@ hintWordToggle.addEventListener('change', (e) => {
 });
 
 function handleStartGame() {
-    if (!gameState.isHost) return;
+    if (!canStartGame(gameState)) {
+        showError('Nur der Spielleiter kann das Spiel starten.');
+        return;
+    }
     
     // Assign roles
     assignRoles();
@@ -281,7 +320,13 @@ function assignRoles() {
         }
     }
     
-    gameState.players = players;
+    // Update player roles in game state
+    players.forEach(updatedPlayer => {
+        const playerIndex = gameState.players.findIndex(p => p.id === updatedPlayer.id);
+        if (playerIndex !== -1) {
+            gameState.players[playerIndex] = updatedPlayer;
+        }
+    });
     
     // Set current player's role
     const currentPlayer = gameState.players.find(p => p.name === gameState.playerName);
