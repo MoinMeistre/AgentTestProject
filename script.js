@@ -16,9 +16,29 @@ const gameState = {
     gamePhase: 'lobby' // lobby, role-reveal, game, voting, results
 };
 
-// Room Management (for simulation purposes)
+// Room Management with localStorage for cross-tab functionality
 const roomManager = {
-    rooms: new Map(),
+    STORAGE_KEY: 'impostor_rooms',
+    
+    // Load rooms from localStorage
+    loadRooms() {
+        try {
+            const stored = localStorage.getItem(this.STORAGE_KEY);
+            return stored ? JSON.parse(stored) : {};
+        } catch (e) {
+            console.warn('Failed to load rooms from localStorage:', e);
+            return {};
+        }
+    },
+    
+    // Save rooms to localStorage
+    saveRooms(rooms) {
+        try {
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(rooms));
+        } catch (e) {
+            console.warn('Failed to save rooms to localStorage:', e);
+        }
+    },
     
     createRoom(hostName) {
         const roomCode = generateRoomCode();
@@ -42,22 +62,36 @@ const roomManager = {
             createdAt: new Date().toISOString()
         };
         
-        this.rooms.set(roomCode, room);
+        // Load existing rooms and add new room
+        const rooms = this.loadRooms();
+        rooms[roomCode] = room;
+        this.saveRooms(rooms);
+        
+        console.log(`🏠 Room created: ${roomCode} with host ${hostName}`);
         return room;
     },
     
     getRoom(roomCode) {
-        return this.rooms.get(roomCode.toUpperCase());
+        const rooms = this.loadRooms();
+        const room = rooms[roomCode.toUpperCase()];
+        if (room) {
+            console.log(`🔍 Found room: ${roomCode} with ${room.players.length} players`);
+        } else {
+            console.log(`❌ Room not found: ${roomCode}`);
+        }
+        return room;
     },
     
     joinRoom(roomCode, playerName) {
         const room = this.getRoom(roomCode);
         if (!room) {
+            console.log(`❌ Join failed - room not found: ${roomCode}`);
             return { success: false, error: 'Spiel nicht gefunden' };
         }
         
         // Check if player name already exists in room
         if (room.players.some(p => p.name === playerName)) {
+            console.log(`❌ Join failed - name already exists: ${playerName}`);
             return { success: false, error: 'Dieser Name ist bereits vergeben' };
         }
         
@@ -70,16 +104,45 @@ const roomManager = {
         };
         
         room.players.push(newPlayer);
+        
+        // Save updated room
+        const rooms = this.loadRooms();
+        rooms[roomCode.toUpperCase()] = room;
+        this.saveRooms(rooms);
+        
+        console.log(`✅ Player joined: ${playerName} to room ${roomCode}`);
+        console.log(`📊 Room ${roomCode} now has ${room.players.length} players:`, room.players.map(p => p.name));
+        
         return { success: true, room, player: newPlayer };
     },
     
     updateGameSettings(roomCode, settings) {
-        const room = this.getRoom(roomCode);
+        const rooms = this.loadRooms();
+        const room = rooms[roomCode.toUpperCase()];
         if (room) {
             room.gameSettings = { ...room.gameSettings, ...settings };
+            this.saveRooms(rooms);
+            console.log(`⚙️ Updated settings for room ${roomCode}:`, settings);
             return true;
         }
+        console.log(`❌ Failed to update settings - room not found: ${roomCode}`);
         return false;
+    },
+    
+    // Debug function to list all rooms
+    listAllRooms() {
+        const rooms = this.loadRooms();
+        console.log('📋 All rooms:', Object.keys(rooms));
+        Object.entries(rooms).forEach(([code, room]) => {
+            console.log(`  ${code}: ${room.players.length} players, host: ${room.host}`);
+        });
+        return rooms;
+    },
+    
+    // Clear all rooms (for testing)
+    clearAllRooms() {
+        localStorage.removeItem(this.STORAGE_KEY);
+        console.log('🗑️ All rooms cleared');
     }
 };
 
@@ -243,6 +306,8 @@ function handleCreateRoom() {
         return;
     }
     
+    console.log(`🎮 Creating room for host: ${name}`);
+    
     // Create room using room manager
     const room = roomManager.createRoom(name);
     
@@ -253,21 +318,37 @@ function handleCreateRoom() {
     gameState.players = [...room.players];
     gameState.gameSettings = { ...room.gameSettings };
     
+    console.log(`✅ Room created successfully: ${room.code}`);
+    console.log(`📊 Initial room state:`, {
+        code: room.code,
+        host: room.host,
+        players: room.players.length,
+        settings: room.gameSettings
+    });
+    
     updateUI();
     showRoomCode();
 }
 
 function joinRoom(roomCode, playerName) {
+    console.log(`🚪 Attempting to join room: ${roomCode} as player: ${playerName}`);
+    
     // Validate room code format
     if (!roomCode || roomCode.length !== 4) {
+        console.log('❌ Invalid room code format');
         showError('Ungültiger Raumcode');
         return false;
     }
+    
+    // Debug: List all available rooms before joining
+    console.log('📋 Available rooms before join:');
+    roomManager.listAllRooms();
     
     // Use room manager to join existing room
     const result = roomManager.joinRoom(roomCode, playerName);
     
     if (!result.success) {
+        console.log(`❌ Join failed: ${result.error}`);
         showError(result.error);
         return false;
     }
@@ -278,6 +359,15 @@ function joinRoom(roomCode, playerName) {
     gameState.playerName = playerName;
     gameState.players = [...result.room.players];
     gameState.gameSettings = { ...result.room.gameSettings };
+    
+    console.log(`✅ Successfully joined room: ${roomCode}`);
+    console.log(`📊 Room state after join:`, {
+        code: result.room.code,
+        host: result.room.host,
+        players: result.room.players.length,
+        playerList: result.room.players.map(p => p.name),
+        settings: result.room.gameSettings
+    });
     
     updateUI();
     return true;
@@ -662,7 +752,10 @@ function showError(message) {
 
 // Test function for debugging (can be removed in production)
 function testRoomManagement() {
-    console.log('🧪 Testing Room Management...');
+    console.log('🧪 Testing Room Management with localStorage...');
+    
+    // Clear existing rooms for clean test
+    roomManager.clearAllRooms();
     
     // Test 1: Create room
     const room1 = roomManager.createRoom('TestHost');
@@ -680,7 +773,42 @@ function testRoomManagement() {
     const invalidResult = roomManager.joinRoom('XXXX', 'TestPlayer');
     console.log('✅ Invalid room test:', invalidResult.success ? 'failed' : 'success', invalidResult.error || 'should have failed');
     
+    // Test 5: Verify room persistence
+    const persistedRoom = roomManager.getRoom(room1.code);
+    console.log('✅ Persistence test:', persistedRoom ? 'success' : 'failed', persistedRoom ? 'Room still exists with ' + persistedRoom.players.length + ' players' : 'Room lost');
+    
+    // Test 6: List all rooms
+    console.log('📋 Final room list:');
+    roomManager.listAllRooms();
+    
     console.log('🧪 Room Management Test Complete');
+}
+
+// Specific test for Issue #6
+function testIssue6Scenario() {
+    console.log('🧪 Testing Issue #6 Scenario...');
+    
+    // Clear rooms
+    roomManager.clearAllRooms();
+    
+    // Step 1: Host creates room in Tab A
+    const room = roomManager.createRoom('Alice');
+    console.log('📝 Step 1: Alice created room:', room.code);
+    
+    // Step 2: Bob tries to join with exact room code
+    const joinResult = roomManager.joinRoom(room.code, 'Bob');
+    console.log('📝 Step 2: Bob joining with code:', room.code);
+    console.log('Result:', joinResult);
+    
+    if (joinResult.success) {
+        console.log('✅ Issue #6 FIXED: Bob successfully joined Alice\'s room');
+        console.log('Room now has players:', joinResult.room.players.map(p => p.name));
+    } else {
+        console.log('❌ Issue #6 NOT FIXED: Bob failed to join room');
+        console.log('Error:', joinResult.error);
+    }
+    
+    return joinResult.success;
 }
 
 // Initialize
@@ -696,9 +824,52 @@ document.addEventListener('DOMContentLoaded', () => {
     // Run test in console (for debugging)
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         window.testRoomManagement = testRoomManagement;
-        console.log('🧪 Run testRoomManagement() in console to test room management');
+        window.listRooms = () => roomManager.listAllRooms();
+        window.clearRooms = () => roomManager.clearAllRooms();
+        console.log('🧪 Debug functions available:');
+        console.log('  testRoomManagement() - Test room management');
+        console.log('  listRooms() - List all rooms');
+        console.log('  clearRooms() - Clear all rooms');
     }
+    
+    // Listen for storage changes for live updates
+    window.addEventListener('storage', (e) => {
+        if (e.key === roomManager.STORAGE_KEY) {
+            console.log('🔄 Room data changed in another tab');
+            // If we're in a room, refresh our data
+            if (gameState.roomCode && gameState.gamePhase === 'lobby') {
+                const room = roomManager.getRoom(gameState.roomCode);
+                if (room) {
+                    gameState.players = [...room.players];
+                    gameState.gameSettings = { ...room.gameSettings };
+                    updateUI();
+                    console.log('🔄 Updated room data from storage');
+                }
+            }
+        }
+    });
 });
+
+// Polling fallback for immediate updates (in case storage event doesn't fire)
+let lastStorageHash = '';
+function checkForRoomUpdates() {
+    const currentHash = localStorage.getItem(roomManager.STORAGE_KEY) || '';
+    if (currentHash !== lastStorageHash) {
+        lastStorageHash = currentHash;
+        if (gameState.roomCode && gameState.gamePhase === 'lobby') {
+            const room = roomManager.getRoom(gameState.roomCode);
+            if (room) {
+                gameState.players = [...room.players];
+                gameState.gameSettings = { ...room.gameSettings };
+                updateUI();
+                console.log('🔄 Room data updated via polling');
+            }
+        }
+    }
+}
+
+// Check for updates every 2 seconds when in lobby
+setInterval(checkForRoomUpdates, 2000);
 
 // Handle page visibility changes
 document.addEventListener('visibilitychange', () => {
