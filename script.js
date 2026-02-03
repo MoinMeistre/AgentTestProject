@@ -16,6 +16,73 @@ const gameState = {
     gamePhase: 'lobby' // lobby, role-reveal, game, voting, results
 };
 
+// Room Management (for simulation purposes)
+const roomManager = {
+    rooms: new Map(),
+    
+    createRoom(hostName) {
+        const roomCode = generateRoomCode();
+        const room = {
+            code: roomCode,
+            host: hostName,
+            players: [
+                {
+                    name: hostName,
+                    id: generatePlayerId(),
+                    isHost: true,
+                    role: null,
+                    joinedAt: new Date().toISOString()
+                }
+            ],
+            gameSettings: {
+                impostorCount: 1,
+                hintWordEnabled: true
+            },
+            gamePhase: 'lobby',
+            createdAt: new Date().toISOString()
+        };
+        
+        this.rooms.set(roomCode, room);
+        return room;
+    },
+    
+    getRoom(roomCode) {
+        return this.rooms.get(roomCode.toUpperCase());
+    },
+    
+    joinRoom(roomCode, playerName) {
+        const room = this.getRoom(roomCode);
+        if (!room) {
+            return { success: false, error: 'Spiel nicht gefunden' };
+        }
+        
+        // Check if player name already exists in room
+        if (room.players.some(p => p.name === playerName)) {
+            return { success: false, error: 'Dieser Name ist bereits vergeben' };
+        }
+        
+        const newPlayer = {
+            name: playerName,
+            id: generatePlayerId(),
+            isHost: false,
+            role: null,
+            joinedAt: new Date().toISOString()
+        };
+        
+        room.players.push(newPlayer);
+        return { success: true, room, player: newPlayer };
+    },
+    
+    updateGameSettings(roomCode, settings) {
+        const room = this.getRoom(roomCode);
+        if (room) {
+            room.gameSettings = { ...room.gameSettings, ...settings };
+            return true;
+        }
+        return false;
+    }
+};
+
 // Word lists for the game
 const wordList = [
     { word: 'Strand', hint: 'Sand' },
@@ -176,51 +243,41 @@ function handleCreateRoom() {
         return;
     }
     
-    gameState.playerName = name;
-    gameState.roomCode = generateRoomCode();
-    gameState.isHost = true;
+    // Create room using room manager
+    const room = roomManager.createRoom(name);
     
-    // Create new room with exactly one player (the host)
-    gameState.players = [
-        { 
-            name: name, 
-            id: generatePlayerId(),
-            isHost: true, 
-            role: null,
-            joinedAt: new Date().toISOString()
-        }
-    ];
+    // Update game state
+    gameState.playerName = name;
+    gameState.roomCode = room.code;
+    gameState.isHost = true;
+    gameState.players = [...room.players];
+    gameState.gameSettings = { ...room.gameSettings };
     
     updateUI();
     showRoomCode();
 }
 
 function joinRoom(roomCode, playerName) {
-    // Validate room code (in real implementation, this would check against a server)
+    // Validate room code format
     if (!roomCode || roomCode.length !== 4) {
         showError('Ungültiger Raumcode');
         return false;
     }
     
-    // Check if player name already exists in the room
-    if (gameState.players.some(p => p.name === playerName)) {
-        showError('Dieser Name ist bereits vergeben');
+    // Use room manager to join existing room
+    const result = roomManager.joinRoom(roomCode, playerName);
+    
+    if (!result.success) {
+        showError(result.error);
         return false;
     }
     
-    // Add new player to the room
-    const newPlayer = {
-        name: playerName,
-        id: generatePlayerId(),
-        isHost: false,
-        role: null,
-        joinedAt: new Date().toISOString()
-    };
-    
-    gameState.players.push(newPlayer);
+    // Update game state with room data
     gameState.roomCode = roomCode;
     gameState.isHost = false;
     gameState.playerName = playerName;
+    gameState.players = [...result.room.players];
+    gameState.gameSettings = { ...result.room.gameSettings };
     
     updateUI();
     return true;
@@ -274,12 +331,25 @@ function updateStartButton() {
 
 // Settings listeners
 impostorCountSelect.addEventListener('change', (e) => {
-    gameState.gameSettings.impostorCount = parseInt(e.target.value);
+    const newCount = parseInt(e.target.value);
+    gameState.gameSettings.impostorCount = newCount;
+    
+    // Update room manager settings if host
+    if (gameState.isHost && gameState.roomCode) {
+        roomManager.updateGameSettings(gameState.roomCode, { impostorCount: newCount });
+    }
+    
     updateStartButton();
 });
 
 hintWordToggle.addEventListener('change', (e) => {
-    gameState.gameSettings.hintWordEnabled = e.target.checked;
+    const enabled = e.target.checked;
+    gameState.gameSettings.hintWordEnabled = enabled;
+    
+    // Update room manager settings if host
+    if (gameState.isHost && gameState.roomCode) {
+        roomManager.updateGameSettings(gameState.roomCode, { hintWordEnabled: enabled });
+    }
 });
 
 function handleStartGame() {
@@ -590,6 +660,29 @@ function showError(message) {
     }, 3000);
 }
 
+// Test function for debugging (can be removed in production)
+function testRoomManagement() {
+    console.log('🧪 Testing Room Management...');
+    
+    // Test 1: Create room
+    const room1 = roomManager.createRoom('TestHost');
+    console.log('✅ Room 1 created:', room1.code, 'with', room1.players.length, 'players');
+    
+    // Test 2: Join room
+    const joinResult = roomManager.joinRoom(room1.code, 'TestPlayer');
+    console.log('✅ Join result:', joinResult.success ? 'success' : 'failed', joinResult.success ? 'Room now has ' + joinResult.room.players.length + ' players' : joinResult.error);
+    
+    // Test 3: Try to join with same name
+    const duplicateResult = roomManager.joinRoom(room1.code, 'TestHost');
+    console.log('✅ Duplicate name test:', duplicateResult.success ? 'failed' : 'success', duplicateResult.error || 'should have failed');
+    
+    // Test 4: Try to join non-existent room
+    const invalidResult = roomManager.joinRoom('XXXX', 'TestPlayer');
+    console.log('✅ Invalid room test:', invalidResult.success ? 'failed' : 'success', invalidResult.error || 'should have failed');
+    
+    console.log('🧪 Room Management Test Complete');
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     // Set initial button states
@@ -599,6 +692,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Focus on name input
     playerNameInput.focus();
+    
+    // Run test in console (for debugging)
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        window.testRoomManagement = testRoomManagement;
+        console.log('🧪 Run testRoomManagement() in console to test room management');
+    }
 });
 
 // Handle page visibility changes

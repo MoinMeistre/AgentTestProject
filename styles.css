@@ -38,9 +38,10 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    min-height: 100vh;
+    height: 100vh;
     overflow-y: auto;
     transition: var(--transition);
+    box-sizing: border-box;
 }
 
 .screen:not(:first-child) {
@@ -55,6 +56,7 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    padding-bottom: 40px; /* Extra padding for scrollability */
 }
 
 /* Header */
@@ -223,6 +225,7 @@ body {
     border-radius: var(--border-radius-large);
     padding: 24px;
     margin-top: 24px;
+    margin-bottom: 40px; /* Ensure space for scrolling */
 }
 
 .settings-section h3 {
@@ -449,6 +452,7 @@ input:checked + .slider:before {
 @media (max-width: 480px) {
     .container {
         padding: 16px;
+        padding-bottom: 60px; /* Extra space on mobile */
     }
     
     .header {
@@ -474,6 +478,11 @@ input:checked + .slider:before {
     
     .word-display #word-content {
         font-size: 28px;
+    }
+    
+    /* Ensure scrolling works properly on mobile */
+    .screen {
+        -webkit-overflow-scrolling: touch;
     }
 }
 
