@@ -1,0 +1,503 @@
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* Farbwelt laut Designbeschreibung */
+    --color-white: #FFFFFF;
+    --color-dark-gray: #1F1F23;
+    --color-soft-gray: #F5F5F7;
+    --color-soft-blue: #4A90E2;
+    --color-pastel-accent: #F5A623;
+    --color-neutral-green: #2ECC71;
+    --color-neutral-red: #E74C3C;
+    
+    /* weitere Variablen */
+    --color-impostor: #F5A623;
+    --color-crew: #4A90E2;
+    --border-radius: 8px;
+    --border-radius-large: 12px;
+    --transition: all 0.3s ease;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--color-white);
+    color: var(--color-dark-gray);
+    font-size: 16px;
+    line-height: 1.5;
+    min-height: 100vh;
+}
+
+/* Screen Management */
+.screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-height: 100vh;
+    overflow-y: auto;
+    transition: var(--transition);
+}
+
+.screen:not(:first-child) {
+    display: none;
+}
+
+/* Container */
+.container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.header {
+    text-align: center;
+    margin-bottom: 32px;
+    padding-top: 40px;
+}
+
+.header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--color-dark-gray);
+    margin-bottom: 8px;
+}
+
+.header h2 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--color-dark-gray);
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Input Groups */
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--color-dark-gray);
+}
+
+.input-group input {
+    width: 100%;
+    padding: 16px;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius);
+    font-size: 16px;
+    font-family: inherit;
+    transition: var(--transition);
+    background-color: var(--color-white);
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: var(--color-soft-blue);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+/* Buttons */
+.btn {
+    padding: 16px 24px;
+    border: none;
+    border-radius: var(--border-radius-large);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    min-height: 48px;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-primary {
+    background-color: var(--color-soft-blue);
+    color: var(--color-white);
+}
+
+.btn-secondary {
+    background-color: var(--color-soft-gray);
+    color: var(--color-dark-gray);
+}
+
+.btn-success {
+    background-color: var(--color-neutral-green);
+    color: var(--color-white);
+}
+
+/* Join Section */
+.join-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Player List */
+.player-list-section {
+    background-color: var(--color-soft-gray);
+    border-radius: var(--border-radius-large);
+    padding: 24px;
+    margin-top: 24px;
+}
+
+.player-list-section h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.player-list {
+    list-style: none;
+    margin-bottom: 16px;
+}
+
+.player-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.player-list li:last-child {
+    border-bottom: none;
+}
+
+.player-name {
+    font-weight: 500;
+}
+
+.host-badge {
+    background-color: var(--color-pastel-accent);
+    color: var(--color-white);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.game-status {
+    text-align: center;
+    color: var(--color-dark-gray);
+    font-size: 14px;
+}
+
+/* Settings Section */
+.settings-section {
+    background-color: var(--color-soft-gray);
+    border-radius: var(--border-radius-large);
+    padding: 24px;
+    margin-top: 24px;
+}
+
+.settings-section h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.setting-item {
+    margin-bottom: 20px;
+}
+
+.setting-item label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.setting-item select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius);
+    font-size: 16px;
+    background-color: var(--color-white);
+}
+
+/* Toggle Switch */
+.toggle-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: var(--transition);
+    border-radius: 28px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: var(--transition);
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--color-soft-blue);
+}
+
+input:checked + .slider:before {
+    transform: translateX(22px);
+}
+
+/* Role Reveal Screen */
+.role-reveal {
+    justify-content: center;
+    align-items: center;
+}
+
+.role-card {
+    text-align: center;
+    padding: 40px 24px;
+    border-radius: var(--border-radius-large);
+    animation: fadeInScale 0.5s ease;
+}
+
+.role-icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+}
+
+.role-card h2 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.role-card.crew {
+    background-color: var(--color-crew);
+    color: var(--color-white);
+}
+
+.role-card.impostor {
+    background-color: var(--color-impostor);
+    color: var(--color-white);
+}
+
+.word-display {
+    text-align: center;
+    padding: 40px 24px;
+}
+
+.word-display #word-content {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.hint-word {
+    font-size: 18px;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+.game-instructions {
+    text-align: center;
+    margin-top: 24px;
+    padding: 20px;
+    background-color: var(--color-soft-gray);
+    border-radius: var(--border-radius-large);
+}
+
+.game-instructions p {
+    margin-bottom: 8px;
+}
+
+/* Voting Screen */
+.voting-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.voting-list {
+    list-style: none;
+    flex: 1;
+}
+
+.voting-list li {
+    margin-bottom: 12px;
+}
+
+.voting-list button {
+    width: 100%;
+    padding: 16px;
+    border: 2px solid var(--color-soft-gray);
+    border-radius: var(--border-radius);
+    background-color: var(--color-white);
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: left;
+    font-size: 16px;
+}
+
+.voting-list button:hover {
+    border-color: var(--color-soft-blue);
+    background-color: var(--color-soft-gray);
+}
+
+.voting-list button.selected {
+    border-color: var(--color-soft-blue);
+    background-color: var(--color-soft-blue);
+    color: var(--color-white);
+}
+
+/* Results Screen */
+.result-card {
+    text-align: center;
+    padding: 40px 24px;
+    border-radius: var(--border-radius-large);
+    animation: fadeInScale 0.5s ease;
+}
+
+.result-card.crew-win {
+    background-color: var(--color-neutral-green);
+    color: var(--color-white);
+}
+
+.result-card.impostor-win {
+    background-color: var(--color-impostor);
+    color: var(--color-white);
+}
+
+/* Animations */
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .container {
+        padding: 16px;
+    }
+    
+    .header {
+        padding-top: 24px;
+    }
+    
+    .header h1 {
+        font-size: 24px;
+    }
+    
+    .header h2 {
+        font-size: 20px;
+    }
+    
+    .btn {
+        padding: 14px 20px;
+        font-size: 15px;
+    }
+    
+    .role-icon {
+        font-size: 64px;
+    }
+    
+    .word-display #word-content {
+        font-size: 28px;
+    }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Focus styles for better accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--color-soft-blue);
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --color-soft-gray: #e0e0e0;
+        --color-soft-blue: #0066cc;
+    }
+}

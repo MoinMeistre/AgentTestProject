@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impostor – Multiplayer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Landing/Lobby Screen -->
+    <div id="landing-screen" class="screen">
+        <div class="container">
+            <header class="header">
+                <h1>Impostor – Multiplayer</h1>
+            </header>
+            
+            <main class="main-content">
+                <div class="join-section">
+                    <div class="input-group">
+                        <label for="player-name">Dein Name</label>
+                        <input type="text" id="player-name" placeholder="Name eingeben" maxlength="20">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="room-code">Raumcode (optional)</label>
+                        <input type="text" id="room-code" placeholder="z.B. ABX7" maxlength="6">
+                    </div>
+                    
+                    <button id="join-btn" class="btn btn-primary">Beitreten</button>
+                    <button id="create-room-btn" class="btn btn-secondary">Neuen Raum erstellen</button>
+                </div>
+                
+                <div class="player-list-section" style="display: none;">
+                    <h3>Spieler im Raum</h3>
+                    <ul id="player-list" class="player-list"></ul>
+                    <div class="game-status">
+                        <span id="status-text">Warten auf Spieler...</span>
+                    </div>
+                </div>
+                
+                <!-- Game Settings (nur für Spielleiter) -->
+                <div id="game-settings" class="settings-section" style="display: none;">
+                    <h3>Spieleinstellungen</h3>
+                    
+                    <div class="setting-item">
+                        <label for="impostor-count">Anzahl Impostors</label>
+                        <select id="impostor-count">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="toggle-label">
+                            <span>Hinweiswort aktivieren</span>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="hint-word-toggle" checked>
+                                <span class="slider"></span>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <button id="start-game-btn" class="btn btn-success" disabled>Spiel starten</button>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Role Assignment Screen -->
+    <div id="role-screen" class="screen" style="display: none;">
+        <div class="container role-reveal">
+            <div class="role-card">
+                <div id="role-icon" class="role-icon"></div>
+                <h2 id="role-title"></h2>
+                <div id="role-content"></div>
+                <button id="continue-to-game-btn" class="btn btn-primary">Verstanden</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen" style="display: none;">
+        <div class="container">
+            <div class="game-info">
+                <div id="word-display" class="word-display">
+                    <div id="word-content"></div>
+                    <div id="hint-content" class="hint-word"></div>
+                </div>
+                <div class="game-instructions">
+                    <p>Gebt nacheinander Hinweise zum geheimen Wort.</p>
+                    <p>Das Wort selbst darf nicht genannt werden!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voting Screen -->
+    <div id="voting-screen" class="screen" style="display: none;">
+        <div class="container">
+            <header class="header">
+                <h2>Wer ist der Impostor?</h2>
+            </header>
+            
+            <main class="main-content">
+                <div class="voting-section">
+                    <p>Wähle aus, wen du für den Impostor hältst:</p>
+                    <ul id="voting-list" class="voting-list"></ul>
+                    <button id="submit-vote-btn" class="btn btn-primary">Abstimmen</button>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="results-screen" class="screen" style="display: none;">
+        <div class="container">
+            <div class="result-card">
+                <h2 id="result-title"></h2>
+                <div id="result-content"></div>
+                <button id="new-round-btn" class="btn btn-primary">Neue Runde</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
